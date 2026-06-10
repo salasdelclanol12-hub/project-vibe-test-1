@@ -1,7 +1,7 @@
 // js/components/hub.js
 // Главное меню кабинета психолога (Экран-хаб).
 
-import { initIcons, escapeHtml } from '../utils.js';
+import { initIcons } from '../utils.js';
 import { triggerHapticImpact } from '../bridge.js';
 
 /**
@@ -13,33 +13,33 @@ import { triggerHapticImpact } from '../bridge.js';
 export function renderHub(containerEl, onSelectQuiz, onSelectSimulator) {
   containerEl.innerHTML = `
     <div class="fade-in space-y-6">
-      <div class="card p-6 bg-gradient-to-br from-[var(--color-accent)]/10 to-transparent border-[var(--color-border)]">
-        <h2 class="text-lg font-bold mb-1.5 text-[var(--color-text)]">Позаботьтесь о себе</h2>
-        <p class="text-xs text-[var(--color-muted)] leading-relaxed">
-          Выберите один из интерактивных инструментов ниже, чтобы определить текущий уровень стресса или найти баланс жизненных ресурсов.
+      <div class="neo-card bg-[#fff5d6] text-slate-900">
+        <h2 class="text-lg font-black mb-1.5 uppercase tracking-wide">🧠 Меню самопомощи</h2>
+        <p class="text-xs text-slate-700 leading-relaxed font-medium">
+          Пройдите тесты ниже, чтобы оценить свое эмоциональное состояние и получить рекомендации психолога.
         </p>
       </div>
 
-      <div class="grid gap-4">
+      <div class="space-y-5">
         <!-- Карточка Квиза -->
-        <div id="hub-quiz-card" class="card p-5 hover:border-[var(--color-accent)] transition-all cursor-pointer flex items-start gap-4 btn-press">
-          <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center shrink-0">
-            <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+        <div id="hub-quiz-card" class="neo-card bg-[#e0dbff] cursor-pointer flex items-start gap-4 hover:translate-y-[-2px] transition-transform btn-press">
+          <div class="w-12 h-12 rounded-xl bg-white border-2 border-black flex items-center justify-center shrink-0 shadow-[2px_2px_0px_0px_#000]">
+            <i data-lucide="clipboard-list" class="w-6 h-6 text-[#6366f1]"></i>
           </div>
           <div class="flex-1 min-w-0">
-            <h3 class="text-sm font-bold text-[var(--color-text)] mb-0.5">Тест на выгорание</h3>
-            <p class="text-xs text-[var(--color-muted)] leading-normal">5 быстрых вопросов, которые помогут узнать ваш текущий уровень стресса.</p>
+            <h3 class="text-base font-black text-slate-900 mb-1 uppercase tracking-tight">Тест на выгорание</h3>
+            <p class="text-xs text-slate-700 leading-normal font-medium">5 вопросов для точной оценки вашего уровня эмоционального истощения.</p>
           </div>
         </div>
 
         <!-- Карточка Симулятора -->
-        <div id="hub-sim-card" class="card p-5 hover:border-[var(--color-accent)] transition-all cursor-pointer flex items-start gap-4 btn-press">
-          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
-            <i data-lucide="sliders" class="w-5 h-5"></i>
+        <div id="hub-sim-card" class="neo-card bg-[#d7f9e6] cursor-pointer flex items-start gap-4 hover:translate-y-[-2px] transition-transform btn-press">
+          <div class="w-12 h-12 rounded-xl bg-white border-2 border-black flex items-center justify-center shrink-0 shadow-[2px_2px_0px_0px_#000]">
+            <i data-lucide="sliders" class="w-6 h-6 text-[#10b981]"></i>
           </div>
           <div class="flex-1 min-w-0">
-            <h3 class="text-sm font-bold text-[var(--color-text)] mb-0.5">Симулятор баланса</h3>
-            <p class="text-xs text-[var(--color-muted)] leading-normal">Интерактивное распределение 100% энергии по главным жизненным сферам.</p>
+            <h3 class="text-base font-black text-slate-900 mb-1 uppercase tracking-tight">Баланс ресурсов</h3>
+            <p class="text-xs text-slate-700 leading-normal font-medium">Слайдер-симулятор распределения энергии по 5 ключевым сферам жизни.</p>
           </div>
         </div>
       </div>

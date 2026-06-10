@@ -25,22 +25,22 @@ export function renderQuiz(containerEl, onBack) {
     containerEl.innerHTML = `
       <div class="fade-in space-y-4">
         <div class="flex items-center">
-          <button id="quiz-back-btn" class="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-xs text-[var(--color-text)] btn-press">
-            <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+          <button id="quiz-back-btn" class="neo-btn neo-btn-secondary py-2 px-3 text-xs max-w-[100px]">
+            <i data-lucide="chevron-left" class="w-3.5 h-3.5 mr-1"></i>
             <span>В меню</span>
           </button>
         </div>
-        <div class="card p-6 flex flex-col items-center text-center">
-          <div class="w-16 h-16 rounded-full bg-[var(--color-surface)] flex items-center justify-center text-[var(--color-accent)] mb-4">
+        <div class="neo-card text-center">
+          <div class="w-16 h-16 rounded-full bg-[#e0dbff] border-2 border-black flex items-center justify-center text-[#6366f1] mx-auto mb-4 shadow-[2px_2px_0px_0px_#000]">
             <i data-lucide="smile" class="w-8 h-8"></i>
           </div>
-          <h2 class="text-xl font-bold mb-2 text-[var(--color-text)]">Узнайте ваш уровень выгорания</h2>
-          <p class="text-xs text-[var(--color-muted)] leading-relaxed mb-6">
+          <h2 class="text-xl font-black mb-2 text-slate-900 uppercase">Уровень выгорания</h2>
+          <p class="text-xs text-slate-600 leading-relaxed mb-6 font-medium">
             Быстрый тест из 5 вопросов разработан профессиональным психологом, чтобы оценить ваше текущее состояние.
           </p>
-          <button id="start-btn" class="btn-primary flex items-center justify-center gap-2">
+          <button id="start-btn" class="neo-btn">
             <span>Начать тест</span>
-            <i data-lucide="play" class="w-4 h-4"></i>
+            <i data-lucide="play" class="w-4 h-4 ml-2"></i>
           </button>
         </div>
       </div>
@@ -59,23 +59,23 @@ export function renderQuiz(containerEl, onBack) {
     const progress = Math.round((step / QUIZ_QUESTIONS.length) * 100);
 
     const optionsHtml = qData.options.map(opt => `
-      <button data-score="${opt.score}" class="option-btn w-full p-4 text-left rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm hover:border-[var(--color-accent)] transition-colors text-[var(--color-text)] btn-press">
+      <button data-score="${opt.score}" class="option-btn neo-btn neo-btn-secondary text-left font-semibold text-sm">
         ${opt.text}
       </button>
     `).join('');
 
     containerEl.innerHTML = `
       <div class="fade-in space-y-5">
-        <div class="flex justify-between items-center text-xs text-[var(--color-muted)] font-medium">
+        <div class="flex justify-between items-center text-xs text-slate-800 font-bold uppercase tracking-wider">
           <span>Вопрос ${step} из ${QUIZ_QUESTIONS.length}</span>
           <span>${progress}%</span>
         </div>
-        <div class="w-full h-1.5 bg-[var(--color-border)] rounded-full overflow-hidden">
-          <div class="h-full bg-[var(--color-accent)] transition-all duration-300" style="width: ${progress}%"></div>
+        <div class="w-full h-4 bg-white border-2 border-black rounded-full overflow-hidden shadow-[2px_2px_0px_0px_#000]">
+          <div class="h-full bg-[var(--color-accent)] border-r-2 border-black transition-all duration-300" style="width: ${progress}%"></div>
         </div>
-        <div class="card p-6">
-          <h3 class="text-base font-semibold mb-5 text-[var(--color-text)] leading-snug">${qData.question}</h3>
-          <div class="space-y-2.5">${optionsHtml}</div>
+        <div class="neo-card">
+          <h3 class="text-base font-black mb-5 text-slate-900 leading-snug">${qData.question}</h3>
+          <div class="flex flex-col gap-3">${optionsHtml}</div>
         </div>
       </div>
     `;
@@ -94,37 +94,37 @@ export function renderQuiz(containerEl, onBack) {
     const result = getResultByScore(totalScore);
     const benefitsHtml = BENEFITS.map((b, idx) => `
       <div class="flex items-start gap-3.5">
-        <div class="w-8 h-8 rounded-lg bg-[var(--color-surface)] flex items-center justify-center shrink-0 text-[var(--color-accent)]">
-          <i data-lucide="${b.icon}" class="w-4.5 h-4.5"></i>
+        <div class="w-10 h-10 rounded-xl bg-white border-2 border-black flex items-center justify-center shrink-0 text-[#6366f1] shadow-[2px_2px_0px_0px_#000]">
+          <i data-lucide="${b.icon}" class="w-5 h-5"></i>
         </div>
         <div class="flex-1 min-w-0">
-          <h4 class="text-sm font-semibold text-[var(--color-text)] mb-0.5">${b.title}</h4>
-          <p class="text-xs text-[var(--color-muted)] leading-relaxed">${b.desc}</p>
+          <h4 class="text-sm font-black text-slate-900 mb-0.5">${b.title}</h4>
+          <p class="text-xs text-slate-600 leading-relaxed font-medium">${b.desc}</p>
         </div>
       </div>
-      ${idx < BENEFITS.length - 1 ? '<div class="h-px bg-[var(--color-border)] my-4 border-dashed"></div>' : ''}
+      ${idx < BENEFITS.length - 1 ? '<div class="h-px bg-black my-4 border-dashed"></div>' : ''}
     `).join('');
 
     containerEl.innerHTML = `
       <div class="fade-in space-y-6">
         <div class="flex items-center">
-          <button id="quiz-result-back-btn" class="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-xs text-[var(--color-text)] btn-press">
-            <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+          <button id="quiz-result-back-btn" class="neo-btn neo-btn-secondary py-2 px-3 text-xs max-w-[100px]">
+            <i data-lucide="chevron-left" class="w-3.5 h-3.5 mr-1"></i>
             <span>В меню</span>
           </button>
         </div>
-        <div class="card p-6 flex flex-col items-center text-center">
-          <div class="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-[var(--color-accent)]/10 text-[var(--color-accent)] mb-3">Ваш результат: ${totalScore} баллов</div>
-          <h3 class="text-lg font-bold mb-2 text-[var(--color-text)]">${result.title}</h3>
-          <p class="text-xs text-[var(--color-muted)] leading-relaxed">${result.description}</p>
+        <div class="neo-card text-center bg-[#e0dbff]">
+          <div class="inline-flex px-3 py-1 rounded-full text-xs font-black bg-white border-2 border-black mb-3 shadow-[1px_1px_0px_0px_#000]">РЕЗУЛЬТАТ: ${totalScore} БАЛЛОВ</div>
+          <h3 class="text-lg font-black mb-2 text-slate-900 uppercase">${result.title}</h3>
+          <p class="text-xs text-slate-700 leading-relaxed font-medium">${result.description}</p>
         </div>
-        <div class="card p-5 space-y-1 bg-[var(--color-surface)] border-[var(--color-border)]">
-          <h4 class="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)] mb-3.5">Что вы получите на консультации:</h4>
-          ${benefitsHtml}
+        <div class="neo-card space-y-4">
+          <h4 class="text-xs font-black uppercase tracking-wider text-slate-900">Что вы получите на консультации:</h4>
+          <div class="space-y-1">${benefitsHtml}</div>
         </div>
-        <button id="cta-btn" class="btn-primary py-4 flex items-center justify-center gap-2">
-          <span>Бесплатный разбор у психолога</span>
-          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        <button id="cta-btn" class="neo-btn">
+          <span>Разбор результатов с психологом</span>
+          <i data-lucide="arrow-right" class="w-4 h-4 ml-2"></i>
         </button>
       </div>
     `;
