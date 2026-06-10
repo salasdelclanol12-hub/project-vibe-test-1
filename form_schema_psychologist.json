@@ -1,0 +1,21 @@
+{
+  "formId": "psychologist_consultation_form",
+  "formName": "Запись на консультацию к психологу",
+  "questions": [
+    {
+      "title": "Как вас зовут?",
+      "type": "text",
+      "required": true
+    },
+    {
+      "title": "Telegram или Телефон",
+      "type": "text",
+      "required": true
+    },
+    {
+      "title": "Что вас больше всего беспокоит?",
+      "type": "text",
+      "required": false
+    }
+  ]
+}

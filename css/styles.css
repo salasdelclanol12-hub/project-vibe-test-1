@@ -111,3 +111,34 @@ body {
   background: var(--color-border);
   margin: 16px 0;
 }
+
+/* ── Loader Screen ───────────────────────── */
+.loader-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100svh;
+}
+.loader-spinner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid rgba(128, 128, 128, 0.2);
+  border-top-color: var(--color-accent);
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Bottom Drawer / Sheet ───────────────── */
+.drawer-visible {
+  visibility: visible !important;
+}
+.drawer-visible #drawer-backdrop {
+  opacity: 1;
+}
+.drawer-visible #drawer-panel {
+  transform: translateY(0);
+}
+

@@ -40,16 +40,18 @@
   <!-- Стили проекта -->
   <link rel="stylesheet" href="./css/styles.css" />
 
-  <!--
-    💡 Notibot Bridge подключается здесь если нужна интеграция с Notibot.
-    Используй скилл "Notibot Bridge" — агент добавит строку ниже:
-    <script src="https://notibot.ru/vibe/notibot-bridge.js"></script>
-  -->
+  <!-- Notibot Bridge — СИНХРОННО, без defer/async -->
+  <script src="https://list.notibot.ru/notibot-bridge.js"></script>
 </head>
 <body>
 
+  <!-- Экран загрузки -->
+  <div id="loading" class="loader-screen">
+    <div class="loader-spinner"></div>
+  </div>
+
   <!-- Корневой элемент приложения -->
-  <div id="app"></div>
+  <div id="app" class="hidden"></div>
 
   <!-- Точка входа (ES Module) -->
   <script type="module" src="./js/app.js"></script>
