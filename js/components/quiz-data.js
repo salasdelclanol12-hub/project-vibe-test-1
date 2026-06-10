@@ -1,6 +1,16 @@
 // js/components/quiz-data.js
 // Данные вопросов и результатов квиза.
 
+export const FORM_SCHEMA = {
+  formId: "psychologist_consultation_form",
+  formName: "Запись на консультацию к психологу"
+};
+
+export const BENEFITS = [
+  { title: "Карта выгорания", desc: "Разбор ваших результатов и определение скрытых источников стресса.", icon: "activity" },
+  { title: "План восстановления", desc: "3 практических шага для возвращения сил без изменения привычного ритма.", icon: "compass" }
+];
+
 export const QUIZ_QUESTIONS = [
   {
     question: "Как часто вы чувствуете усталость сразу после пробуждения?",

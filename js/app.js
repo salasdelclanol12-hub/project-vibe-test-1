@@ -1,12 +1,13 @@
 // js/app.js
 // Главная точка входа приложения.
 // Здесь импортируются и собираются все компоненты.
-// Подключенные компоненты: quiz, quiz-data, quiz-drawer
-
+// Подключенные компоненты: quiz, quiz-data, quiz-drawer, hub, simulator, simulator-data, simulator-drawer
 
 import { initIcons } from './utils.js';
 import { initBridge } from './bridge.js';
+import { renderHub } from './components/hub.js';
 import { renderQuiz } from './components/quiz.js';
+import { renderSimulator } from './components/simulator.js';
 
 /**
  * Инициализация и рендер приложения после готовности моста.
@@ -16,16 +17,15 @@ function initApp(state) {
   const loadingEl = document.getElementById('loading');
   const appEl = document.getElementById('app');
 
-  // Скрываем экран загрузки и показываем основной контейнер
   if (loadingEl) loadingEl.classList.add('hidden');
   if (appEl) appEl.classList.remove('hidden');
 
   appEl.innerHTML = `
     <main class="max-w-xl mx-auto px-6 pt-8 pb-8 safe-top safe-bottom">
-      <header class="flex items-center justify-between mb-8">
+      <header class="flex items-center justify-between mb-6">
         <div>
-          <h1 class="text-xl font-bold tracking-tight text-[var(--color-text)]">Психологический Квиз</h1>
-          <p class="text-xs text-[var(--color-muted)]">Тест на эмоциональное выгорание</p>
+          <h1 class="text-xl font-bold tracking-tight text-[var(--color-text)]">Кабинет психолога</h1>
+          <p class="text-xs text-[var(--color-muted)]">Интерактивная самодиагностика</p>
         </div>
         <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] text-xs font-medium text-[var(--color-muted)]">
           <i data-lucide="user" class="w-3.5 h-3.5 text-[var(--color-accent)]"></i>
@@ -33,15 +33,27 @@ function initApp(state) {
         </div>
       </header>
       
-      <!-- Контейнер квиза -->
-      <div id="quiz-container"></div>
+      <!-- Контейнер для активного экрана -->
+      <div id="screen-container"></div>
     </main>
   `;
 
-  // Рендерим квиз в контейнере
-  const quizContainer = document.getElementById('quiz-container');
-  renderQuiz(quizContainer);
+  const screenContainer = document.getElementById('screen-container');
 
+  const showHub = () => {
+    renderHub(screenContainer, showQuiz, showSimulator);
+  };
+
+  const showQuiz = () => {
+    renderQuiz(screenContainer, showHub);
+  };
+
+  const showSimulator = () => {
+    renderSimulator(screenContainer, showHub);
+  };
+
+  // Запуск с главного экрана
+  showHub();
   initIcons();
 }
 

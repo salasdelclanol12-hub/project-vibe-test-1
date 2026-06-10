@@ -1,0 +1,21 @@
+{
+  "formId": "simulator_resource_form",
+  "formName": "Получить чек-лист по балансу ресурсов",
+  "questions": [
+    {
+      "title": "Как вас зовут?",
+      "type": "text",
+      "required": true
+    },
+    {
+      "title": "Ваш Email",
+      "type": "email",
+      "required": true
+    },
+    {
+      "title": "Распределение ресурсов",
+      "type": "text",
+      "required": false
+    }
+  ]
+}
