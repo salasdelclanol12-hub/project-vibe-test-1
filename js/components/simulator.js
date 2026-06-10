@@ -45,10 +45,12 @@ export function renderSimulator(containerEl, onBack) {
   containerEl.innerHTML = `
     <div class="fade-in space-y-6">
       <div class="flex items-center justify-between">
-        <button id="sim-back-btn" class="neo-btn neo-btn-secondary py-2 px-3 text-xs max-w-[100px]">
-          <i data-lucide="chevron-left" class="w-3.5 h-3.5 mr-1"></i>
-          <span>В меню</span>
-        </button>
+        ${onBack ? `
+          <button id="sim-back-btn" class="neo-btn neo-btn-secondary py-2 px-3 text-xs max-w-[100px]">
+            <i data-lucide="chevron-left" class="w-3.5 h-3.5 mr-1"></i>
+            <span>В меню</span>
+          </button>
+        ` : '<div></div>'}
         <span id="energy-counter" class="text-xs font-black px-3 py-1.5 rounded-full border-2 border-black bg-emerald-500/10 text-emerald-600 shadow-[2px_2px_0px_0px_#000]">Свободная энергия: 0%</span>
       </div>
 
@@ -76,7 +78,9 @@ export function renderSimulator(containerEl, onBack) {
 
   initIcons();
 
-  containerEl.querySelector('#sim-back-btn').addEventListener('click', onBack);
+  if (onBack) {
+    containerEl.querySelector('#sim-back-btn').addEventListener('click', onBack);
+  }
 
   const ctaBtn = containerEl.querySelector('#sim-cta-btn');
   const energyCounter = containerEl.querySelector('#energy-counter');
@@ -136,7 +140,7 @@ export function renderSimulator(containerEl, onBack) {
   ctaBtn.addEventListener('click', () => {
     const summary = SIMULATOR_SPHERES.map(s => `${s.name}: ${values[s.id]}%`).join(', ');
     const drawer = initSimulatorDrawer(FORM_SCHEMA, summary, () => {
-      onBack();
+      if (onBack) onBack();
     });
     drawer.open();
   });

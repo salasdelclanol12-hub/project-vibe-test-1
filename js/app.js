@@ -24,12 +24,12 @@ function initApp(state) {
     <main class="max-w-xl mx-auto px-6 pt-8 pb-8 safe-top safe-bottom">
       <header class="flex items-center justify-between mb-6">
         <div>
-          <h1 class="text-xl font-bold tracking-tight text-[var(--color-text)]">Кабинет психолога</h1>
-          <p class="text-xs text-[var(--color-muted)]">Интерактивная самодиагностика</p>
+          <h1 class="text-xl font-black uppercase tracking-tight text-[var(--color-text)]">Кабинет психолога</h1>
+          <p class="text-xs font-semibold text-[var(--color-muted)]">Баланс жизненных ресурсов</p>
         </div>
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] text-xs font-medium text-[var(--color-muted)]">
-          <i data-lucide="user" class="w-3.5 h-3.5 text-[var(--color-accent)]"></i>
-          <span>${state.user?.displayName || 'Пользователь'}</span>
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border-2 border-black text-xs font-black text-slate-800 shadow-[2px_2px_0px_0px_#000]">
+          <i data-lucide="user" class="w-3.5 h-3.5 text-[#6366f1]"></i>
+          <span>${state.user ? state.user.displayName : 'Пользователь'}</span>
         </div>
       </header>
       
@@ -40,20 +40,8 @@ function initApp(state) {
 
   const screenContainer = document.getElementById('screen-container');
 
-  const showHub = () => {
-    renderHub(screenContainer, showQuiz, showSimulator);
-  };
-
-  const showQuiz = () => {
-    renderQuiz(screenContainer, showHub);
-  };
-
-  const showSimulator = () => {
-    renderSimulator(screenContainer, showHub);
-  };
-
-  // Запуск с главного экрана
-  showHub();
+  // Запуск симулятора баланса ресурсов напрямую
+  renderSimulator(screenContainer);
   initIcons();
 }
 
