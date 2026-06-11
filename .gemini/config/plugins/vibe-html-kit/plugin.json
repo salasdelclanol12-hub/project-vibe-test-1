@@ -31,6 +31,10 @@
     {
       "name": "pro-list",
       "path": "skills/pro-list/SKILL.md"
+    },
+    {
+      "name": "github-pages",
+      "path": "skills/github-pages/SKILL.md"
     }
   ]
 }
