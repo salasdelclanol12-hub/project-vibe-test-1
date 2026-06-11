@@ -2,3 +2,6 @@
 .env
 *.log
 node_modules/
+dodo.zip
+*.zip
+*.tar.gz
