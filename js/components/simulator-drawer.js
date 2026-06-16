@@ -9,7 +9,7 @@ let activeDrawer = null;
 /**
  * Инициализирует и возвращает контроллер шторки с формой для симулятора.
  * @param {Object} formSchema - Схема формы из Notibot
- * @param {string} balanceSummary - Текстовая сводка распределения ресурсов
+ * @param {string} balanceSummary - Текстовая сводка распределения ресурсов (сохраняется для совместимости)
  * @param {Function} onComplete - Коллбэк после успешной отправки
  */
 export function initSimulatorDrawer(formSchema, balanceSummary, onComplete) {
@@ -29,14 +29,13 @@ export function initSimulatorDrawer(formSchema, balanceSummary, onComplete) {
           <p class="text-xs text-slate-700 mb-5 font-semibold">Укажите ваши данные, чтобы получить чек-лист «Как найти 30 минут для себя, не вызывая чувства вины».</p>
           <form id="simulator-lead-form" class="space-y-4">
             <div>
-              <label class="block text-xs font-black uppercase text-slate-800 mb-1.5">Как вас зовут? *</label>
-              <input type="text" id="form-name" required placeholder="Введите ваше имя" class="w-full px-4 py-3 rounded-xl border-2 border-black bg-white text-sm font-semibold focus:outline-none shadow-[2px_2px_0px_0px_#000] transition-all text-slate-900" />
+              <label class="block text-xs font-black uppercase text-slate-800 mb-1.5">Имя</label>
+              <input type="text" id="form-name" placeholder="Введите ваше имя" class="w-full px-4 py-3 rounded-xl border-2 border-black bg-white text-sm font-semibold focus:outline-none shadow-[2px_2px_0px_0px_#000] transition-all text-slate-900" />
             </div>
             <div>
-              <label class="block text-xs font-black uppercase text-slate-800 mb-1.5">Ваш Email *</label>
-              <input type="email" id="form-email" required placeholder="example@mail.com" class="w-full px-4 py-3 rounded-xl border-2 border-black bg-white text-sm font-semibold focus:outline-none shadow-[2px_2px_0px_0px_#000] transition-all text-slate-900" />
+              <label class="block text-xs font-black uppercase text-slate-800 mb-1.5">Телефон *</label>
+              <input type="tel" id="form-phone" required placeholder="+7..." class="w-full px-4 py-3 rounded-xl border-2 border-black bg-white text-sm font-semibold focus:outline-none shadow-[2px_2px_0px_0px_#000] transition-all text-slate-900" />
             </div>
-            <input type="hidden" id="form-balance" value="${escapeHtml(balanceSummary)}" />
             <div class="pt-4 border-t-2 border-black">
               <button type="submit" id="drawer-submit-btn" class="neo-btn">
                 <span>Получить чек-лист</span>
@@ -50,7 +49,7 @@ export function initSimulatorDrawer(formSchema, balanceSummary, onComplete) {
   `;
 
   const container = document.createElement('div');
-  container.innerHTML = html.trim(); // safe: template contains only pre-escaped values and static HTML
+  container.innerHTML = html.trim();
   activeDrawer = container.firstChild;
   document.body.appendChild(activeDrawer);
 
@@ -81,18 +80,16 @@ export function initSimulatorDrawer(formSchema, balanceSummary, onComplete) {
     if (existingError) existingError.remove();
 
     const name = document.getElementById('form-name').value.trim();
-    const email = document.getElementById('form-email').value.trim();
-    const balance = document.getElementById('form-balance').value;
-    if (!name || !email) return;
+    const phone = document.getElementById('form-phone').value.trim();
+    if (!phone) return;
 
     submitBtn.disabled = true;
     const btnSpan = submitBtn.querySelector('span');
     btnSpan.textContent = 'Отправка...';
 
     const answers = [
-      { title: "Как вас зовут?", answers: [name] },
-      { title: "Ваш Email", answers: [email] },
-      { title: "Распределение ресурсов", answers: [balance] }
+      { title: "Имя ", answers: name ? [name] : [] },
+      { title: "Телефон", answers: [phone] }
     ];
 
     try {
@@ -104,7 +101,7 @@ export function initSimulatorDrawer(formSchema, balanceSummary, onComplete) {
         <div class="flex flex-col items-center justify-center text-center py-8">
           <div class="w-16 h-16 bg-[#d7f9e6] border-2 border-black rounded-full flex items-center justify-center text-emerald-600 mb-4 shadow-[3px_3px_0px_0px_#000]"><i data-lucide="check" class="w-8 h-8"></i></div>
           <h3 class="text-xl font-black mb-2 text-slate-900 uppercase">Готово!</h3>
-          <p class="text-xs text-slate-600 max-w-sm mb-6 font-semibold">Чек-лист успешно отправлен на ваш Email: <b>${escapeHtml(email)}</b>. Проверьте ваш почтовый ящик.</p>
+          <p class="text-xs text-slate-600 max-w-sm mb-6 font-semibold">Спасибо! Чек-лист будет отправлен на номер <b>${escapeHtml(phone)}</b>.</p>
           <button id="success-close-btn" class="neo-btn max-w-[200px]">Отлично</button>
         </div>
       `;

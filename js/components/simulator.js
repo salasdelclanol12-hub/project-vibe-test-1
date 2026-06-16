@@ -7,7 +7,7 @@ import { SIMULATOR_SPHERES, getPsychologistWarnings } from './simulator-data.js'
 import { initSimulatorDrawer } from './simulator-drawer.js';
 
 const FORM_SCHEMA = {
-  formId: "simulator_resource_form",
+  formId: "2aitGGUUazggGzsMWDd2XY",
   formName: "Получить чек-лист по балансу ресурсов"
 };
 
