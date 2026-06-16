@@ -87,7 +87,7 @@ export function initQuizDrawer(formSchema, onComplete) {
     btnSpan.textContent = 'Отправка...';
 
     const answers = [
-      { title: "Имя ", answers: [name] },
+      { title: "Имя ", answers: name ? [name] : [] },
       { title: "Телефон", answers: [phone] }
     ];
 
