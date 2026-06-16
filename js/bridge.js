@@ -76,10 +76,37 @@ export function goToStorefront() {
 // Формы
 export async function submitForm(formId, answers) {
   if (window.notibot && typeof window.notibot.submitForm === 'function') {
-    return Promise.race([
-      window.notibot.submitForm(formId, answers),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("Превышено время ожидания ответа от Notibot (10 сек)")), 10000))
-    ]);
+    return new Promise((resolve, reject) => {
+      const handleMessage = (event) => {
+        if (event.data?.source === 'vibe-parent') {
+          if (event.data.success === false) {
+            const errorMsg = event.data.error || 'Failed to submit form';
+            const extra = [];
+            if (event.data.data) extra.push(`data: ${JSON.stringify(event.data.data)}`);
+            if (event.data.details) extra.push(`details: ${JSON.stringify(event.data.details)}`);
+            const finalMsg = errorMsg + (extra.length > 0 ? ` [${extra.join(', ')}]` : '');
+            cleanup();
+            reject(new Error(finalMsg));
+          } else if (event.data.success === true) {
+            cleanup();
+            resolve(event.data.data);
+          }
+        }
+      };
+      const timeout = setTimeout(() => {
+        cleanup();
+        reject(new Error("Превышено время ожидания ответа от Notibot (10 сек)"));
+      }, 10000);
+      const cleanup = () => {
+        window.removeEventListener('message', handleMessage);
+        clearTimeout(timeout);
+      };
+      window.addEventListener('message', handleMessage);
+      window.notibot.submitForm(formId, answers).catch((err) => {
+        cleanup();
+        reject(err);
+      });
+    });
   }
   console.log("Mock submitForm call:", formId, answers);
   return new Promise((resolve) => setTimeout(() => resolve({ success: true }), 800));
