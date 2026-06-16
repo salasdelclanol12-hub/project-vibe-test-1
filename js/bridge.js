@@ -78,8 +78,11 @@ export async function submitForm(formId, answers) {
   if (window.notibot && typeof window.notibot.submitForm === 'function') {
     return new Promise((resolve, reject) => {
       const handleMessage = (event) => {
-        if (event.data?.source === 'vibe-parent') {
-          if (event.data.success === false) {
+        if (event.data?.source === 'vibe-parent' && event.data?.requestId) {
+          if (event.data.success) {
+            cleanup();
+            resolve(event.data.data);
+          } else {
             let errorText;
             try {
               errorText = JSON.stringify(event.data);
@@ -88,9 +91,6 @@ export async function submitForm(formId, answers) {
             }
             cleanup();
             reject(new Error(errorText));
-          } else if (event.data.success === true) {
-            cleanup();
-            resolve(event.data.data);
           }
         }
       };
