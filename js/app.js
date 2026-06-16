@@ -37,9 +37,13 @@ function initApp(state) {
           
           <!-- Правая часть: Профиль пользователя -->
           <div class="flex items-center gap-2 px-3 py-1.5 bg-white border-2 border-black rounded-xl text-xs font-black shadow-[3px_3px_0px_0px_#000] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_0px_#000] transition-all duration-75">
-            <div class="w-6 h-6 rounded-full bg-[var(--color-accent)] border-2 border-black flex items-center justify-center text-[10px]">
-              👤
-            </div>
+            ${state.user && state.user.photoURL ? `
+              <img src="${state.user.photoURL}" class="w-6 h-6 rounded-full border-2 border-black object-cover" alt="" />
+            ` : `
+              <div class="w-6 h-6 rounded-full bg-[var(--color-accent)] border-2 border-black flex items-center justify-center text-[10px]">
+                👤
+              </div>
+            `}
             <span class="text-slate-800">${state.user ? state.user.displayName : 'Пользователь'}</span>
           </div>
         </div>

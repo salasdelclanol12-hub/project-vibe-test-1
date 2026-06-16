@@ -38,18 +38,13 @@ export function initQuizDrawer(formSchema, onComplete) {
           
           <form id="lead-form" class="space-y-4">
             <div>
-              <label class="block text-xs font-black uppercase text-slate-800 mb-1.5">Как вас зовут? *</label>
-              <input type="text" id="form-name" required placeholder="Введите ваше имя" class="w-full px-4 py-3 rounded-xl border-2 border-black bg-white text-sm font-semibold focus:outline-none shadow-[2px_2px_0px_0px_#000] transition-all text-slate-900" />
+              <label class="block text-xs font-black uppercase text-slate-800 mb-1.5">Имя</label>
+              <input type="text" id="form-name" placeholder="Введите ваше имя" class="w-full px-4 py-3 rounded-xl border-2 border-black bg-white text-sm font-semibold focus:outline-none shadow-[2px_2px_0px_0px_#000] transition-all text-slate-900" />
             </div>
             
             <div>
-              <label class="block text-xs font-black uppercase text-slate-800 mb-1.5">Telegram или Телефон *</label>
-              <input type="text" id="form-contact" required placeholder="@username или +7..." class="w-full px-4 py-3 rounded-xl border-2 border-black bg-white text-sm font-semibold focus:outline-none shadow-[2px_2px_0px_0px_#000] transition-all text-slate-900" />
-            </div>
-            
-            <div>
-              <label class="block text-xs font-black uppercase text-slate-800 mb-1.5">Что вас больше всего беспокоит? (необязательно)</label>
-              <textarea id="form-message" rows="2" placeholder="Кратко опишите вашу ситуацию..." class="w-full px-4 py-3 rounded-xl border-2 border-black bg-white text-sm font-semibold focus:outline-none shadow-[2px_2px_0px_0px_#000] transition-all resize-none text-slate-900"></textarea>
+              <label class="block text-xs font-black uppercase text-slate-800 mb-1.5">Телефон *</label>
+              <input type="tel" id="form-phone" required placeholder="+7..." class="w-full px-4 py-3 rounded-xl border-2 border-black bg-white text-sm font-semibold focus:outline-none shadow-[2px_2px_0px_0px_#000] transition-all text-slate-900" />
             </div>
             
             <div class="pt-4 border-t-2 border-black">
@@ -94,19 +89,17 @@ export function initQuizDrawer(formSchema, onComplete) {
     triggerHapticImpact('light');
 
     const name = document.getElementById('form-name').value.trim();
-    const contact = document.getElementById('form-contact').value.trim();
-    const message = document.getElementById('form-message').value.trim();
+    const phone = document.getElementById('form-phone').value.trim();
 
-    if (!name || !contact) return;
+    if (!phone) return;
 
     submitBtn.disabled = true;
     const btnSpan = submitBtn.querySelector('span');
     btnSpan.textContent = 'Отправка...';
 
     const answers = [
-      { title: "Как вас зовут?", answers: [name] },
-      { title: "Telegram или Телефон", answers: [contact] },
-      { title: "Что вас больше всего беспокоит?", answers: [message || "Не указано"] }
+      { title: "Имя ", answers: [name] },
+      { title: "Телефон", answers: [phone] }
     ];
 
     try {

@@ -2,8 +2,8 @@
 // Данные вопросов и результатов квиза.
 
 export const FORM_SCHEMA = {
-  formId: "psychologist_consultation_form",
-  formName: "Запись на консультацию к психологу"
+  formId: "2aitGGUUazggGzsMWDd2XY",
+  formName: "Форма для вайб квиза"
 };
 
 export const BENEFITS = [
