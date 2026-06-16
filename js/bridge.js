@@ -18,27 +18,36 @@ window.addEventListener('message', (event) => {
   }
 }, true);
 
-// Перехватываем ответы бэкенда Notibot, чтобы сохранять исходный объект ответа в ошибке
-if (window.notibot && window.notibot._responseHandlers) {
-  window.notibot._responseHandlers = new Proxy(window.notibot._responseHandlers, {
-    set(target, prop, value) {
-      if (typeof value === 'function') {
-        const original = value;
-        value = (response) => {
-          if (response && !response.success) {
-            const raw = _rawResponses.get(prop) || response;
-            try {
-              response.error = JSON.stringify(raw);
-            } catch (e) {
-              response.error = String(raw);
+function _wrap(inst) {
+  if (inst?._responseHandlers && !inst._responseHandlers.__isProxy) {
+    inst._responseHandlers = new Proxy(inst._responseHandlers, {
+      set(target, prop, val) {
+        if (typeof val === 'function') {
+          const orig = val;
+          val = (resp) => {
+            if (resp && !resp.success) {
+              const raw = _rawResponses.get(prop) || resp;
+              try { resp.error = JSON.stringify(raw); } catch (e) { resp.error = String(raw); }
             }
-          }
-          _rawResponses.delete(prop);
-          return original(response);
-        };
-      }
-      return Reflect.set(target, prop, value);
-    }
+            _rawResponses.delete(prop);
+            return orig(resp);
+          };
+        }
+        return Reflect.set(target, prop, val);
+      },
+      get(t, p) { return p === '__isProxy' ? true : Reflect.get(t, p); }
+    });
+  }
+}
+
+if (window.notibot) {
+  _wrap(window.notibot);
+} else {
+  let _temp;
+  Object.defineProperty(window, 'notibot', {
+    configurable: true, enumerable: true,
+    get() { return _temp; },
+    set(val) { _temp = val; _wrap(val); }
   });
 }
 
