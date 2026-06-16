@@ -1,190 +1,148 @@
 ---
-name: Notibot Bridge Integration
-description: Инструкция по подключению и использованию Notibot Bridge в существующем Vibe HTML Kit проекте. Используй этот скилл когда пользователь хочет интегрировать приложение с платформой Notibot.
+name: Notibot Form Integration & Debugging Guide
+description: Инструкция по правильному подключению форм, обходу ограничений деструктуризации SDK и предотвращению ошибок валидации на сервере Notibot.
 ---
 
-# Скилл: Подключение Notibot Bridge
+# Скилл: Интеграция и надежная отладка форм Notibot
 
 > [!IMPORTANT]
-> Этот скилл — расширение для базового HTML Kit.
-> Перед выполнением прочитай правила проекта в `skills/rules/SKILL.md`.
-
-> [!NOTE]
-> Полная документация по API Notibot Bridge (методы, данные, формы, примеры кода) —
-> в файле [`SDK-reference.md`](./SDK-reference.md). Прочитай его перед интеграцией.
+> Этот скилл содержит критически важные архитектурные решения по работе с формами Notibot. Прочитайте его полностью перед изменением файлов `bridge.js` или компонентов шторки/форм.
 
 ---
 
-## Что такое Notibot Bridge
-
-Notibot Bridge — это SDK, который позволяет Vibe-приложению (работающему в iframe внутри Notibot) получать данные пользователя, управлять навигацией и отправлять формы.
-
-Данные приходят через `postMessage` от родительского фрейма.
-
----
-
-## Шаг 1. Подключение скрипта через CDN
-
-Открой `index.html` и добавь строку **синхронно** в `<head>`, **до любых других скриптов**:
-
-```html
-<!-- Notibot Bridge — СИНХРОННО, без defer/async -->
-<script src="https://list.notibot.ru/notibot-bridge.js"></script>
-```
-
-Найди в `index.html` комментарий `💡 Notibot Bridge подключается здесь` и замени его на строку выше.
+## 🔒 1. Локальная загрузка SDK (Content Security Policy)
 
 > [!WARNING]
-> Никогда не подключать Bridge через `import`, `defer` или `async`.
-> Только синхронный `<script>` в `<head>`. Иначе приложение пропустит
-> первое сообщение `NOTIBOT_INIT` и зависнет на загрузке.
+> Никогда не используйте внешние CDN-ссылки вроде `https://list.notibot.ru/notibot-bridge.js` в проектах со строгими политиками безопасности. Скрипт будет заблокирован директивой CSP `script-src 'self'`.
+
+* **Правильное решение**: Скачайте SDK локально в `js/notibot-bridge.js` и подключайте его в `<head>` в `index.html` как локальный ресурс:
+  ```html
+  <script src="./js/notibot-bridge.js"></script>
+  ```
+  Это гарантирует полную совместимость с CSP и мгновенный старт.
 
 ---
 
-## Шаг 2. Создание js/bridge.js
+## 📊 2. Правила валидации схемы и отправки ответов
 
-Создай файл `js/bridge.js` — единственное место в проекте где используется `window.notibot`:
+При работе с методом `window.notibot.submitForm(formId, answers)` бэкенд Notibot сверяет структуру с JSON-схемой формы.
+
+### 2.1. Строгое совпадение названий вопросов
+Названия полей (ключ `title` в объекте ответа) должны **символ в символ** совпадать с заголовками вопросов из схемы на сервере.
+* Обратите внимание на пробелы! Например, если в схеме вопрос называется `"Имя "` (с пробелом на конце), отправка ключа `"Имя"` (без пробела) приведет к ошибке `Failed to submit form`.
+* Отправка полей, которых нет в схеме (например, попытка продублировать или отправить лишний лог), вызовет ошибку валидации.
+
+### 2.2. Заполнение необязательных полей
+Если поле не заполнено пользователем и оно не является обязательным (`required: false`):
+* **Правильно**: Отправлять пустой массив в значении ответов:
+  ```javascript
+  { title: "Имя ", answers: name ? [name] : [] }
+  ```
+* **Неправильно**: Отправлять пустую строку `answers: [""]` или опускать/передавать `undefined`. Это приведет к ошибке формата данных на бэкенде.
+
+---
+
+## 🛠️ 3. Решение проблемы с потерей деталей ошибок в SDK
+
+### 3.1. Суть проблемы
+По умолчанию локальный SDK Notibot при обработке ответов от родительского окна делает деструктуризацию сообщения:
+`const { requestId, success, data, error } = event.data;`
+И передает дальше только эти свойства. Если сервер присылает детальные ошибки валидации (например, в свойствах `details` или `message`), они **полностью теряются**, а разработчик видит лишь дефолтное `Failed to submit form`.
+
+### 3.2. Архитектурное решение (Capturing + Proxy + Getter/Setter)
+Для того чтобы прокинуть сырой ответ сервера на форму без модификации исходного SDK, используйте следующий шаблон в `js/bridge.js`:
 
 ```javascript
-// js/bridge.js
-// Все вызовы Notibot Bridge — только отсюда.
+const _rawResponses = new Map();
 
-let _state = { user: null, app: null, colors: null };
-const _listeners = [];
+// 1. Захватываем оригинальное событие на фазе capturing (до обработчика SDK)
+window.addEventListener('message', (event) => {
+  if (event.data?.source === 'vibe-parent' && event.data?.requestId) {
+    _rawResponses.set(event.data.requestId, event.data);
+  }
+}, true);
 
-/**
- * Инициализация Bridge. Вызывается один раз из app.js.
- * @param {Function} onReady — коллбэк { user, app, colors }
- */
-export function initBridge(onReady) {
-  window.notibot.onUpdate(function(data) {
-    _state = { user: data.user, app: data.app, colors: data.app.colors };
-    _applyTheme(_state.colors);
+// 2. Оборачиваем _responseHandlers в Proxy для подмены поля error полным JSON
+function _wrap(inst) {
+  if (inst?._responseHandlers && !inst._responseHandlers.__isProxy) {
+    inst._responseHandlers = new Proxy(inst._responseHandlers, {
+      set(target, prop, val) {
+        if (typeof val === 'function') {
+          const orig = val;
+          val = (resp) => {
+            if (resp && !resp.success) {
+              const raw = _rawResponses.get(prop) || resp;
+              try { resp.error = JSON.stringify(raw); } catch (e) { resp.error = String(raw); }
+            }
+            _rawResponses.delete(prop);
+            return orig(resp);
+          };
+        }
+        return Reflect.set(target, prop, val);
+      },
+      get(t, p) { return p === '__isProxy' ? true : Reflect.get(t, p); }
+    });
+  }
+}
 
-    if (onReady) { onReady(_state); onReady = null; }
-    _listeners.forEach(fn => fn(_state));
+// 3. Устраняем гонку загрузки скриптов с помощью геттера/сеттера на window.notibot
+if (window.notibot) {
+  _wrap(window.notibot);
+} else {
+  let _temp;
+  Object.defineProperty(window, 'notibot', {
+    configurable: true, enumerable: true,
+    get() { return _temp; },
+    set(val) { _temp = val; _wrap(val); }
   });
 }
+```
 
-/** Подписаться на обновления (баланс, тема) */
-export function onStateUpdate(fn) { _listeners.push(fn); }
+---
 
-/** Текущее состояние */
-export function getState() { return _state; }
+## 🚀 4. Шаблон реализации отправки форм в `js/bridge.js`
 
-// Навигация
-export function goToProduct(id)   { id ? window.notibot.openProduct(id)  : window.notibot.openStorefront(); }
-export function goToArticle(id)   { id ? window.notibot.openArticle(id)  : window.notibot.openStorefront(); }
-export function goToStorefront()  { window.notibot.openStorefront(); }
-export function goToUserCard()    { window.notibot.openUserCard(); }
+Используйте этот компактный и отказоустойчивый метод для обертки `submitForm`. Он содержит безопасный 10-секундный таймаут и возвращает полную ошибку:
 
-// Формы
+```javascript
 export async function submitForm(formId, answers) {
-  return window.notibot.submitForm(formId, answers);
-}
+  if (window.notibot && typeof window.notibot.submitForm === 'function') {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error("Превышено время ожидания ответа от Notibot (10 сек)"));
+      }, 10000);
 
-// Тема
-function _applyTheme(colors) {
-  const r = document.documentElement;
-  r.style.setProperty('--color-bg',     colors.background);
-  r.style.setProperty('--color-text',   colors.textPrimary);
-  r.style.setProperty('--color-muted',  colors.textSecondary);
-  r.style.setProperty('--color-accent', colors.primaryMain);
-  document.body.style.backgroundColor = colors.background;
-  document.body.style.color           = colors.textPrimary;
+      window.notibot.submitForm(formId, answers)
+        .then((res) => {
+          clearTimeout(timeout);
+          resolve(res);
+        })
+        .catch((err) => {
+          clearTimeout(timeout);
+          // Выводим ошибку, которая благодаря Proxy содержит полный JSON ответа
+          reject(err);
+        });
+    });
+  }
+  console.log("Mock submitForm call:", formId, answers);
+  return new Promise((resolve) => setTimeout(() => resolve({ success: true }), 800));
 }
 ```
 
 ---
 
-## Шаг 3. Обновление app.js
+## 📝 5. Пример обработки ошибки на форме (UI-компонент)
 
-Оберни `initApp` в `initBridge` вместо прямого вызова:
+Для удобства пользователя выводите ошибку инлайн на форме (с помощью `textContent` для защиты от XSS):
 
 ```javascript
-// Было:
-initApp();
-
-// Стало:
-import { initBridge } from './bridge.js';
-initBridge(function(state) {
-  initApp(state); // state содержит { user, app, colors }
-});
-```
-
-Также добавь в `index.html` loading-экран, если его нет:
-```html
-<div id="loading" class="loader-screen">
-  <div class="loader-spinner"></div>
-</div>
-```
-
-И в `css/styles.css`:
-```css
-.loader-screen {
-  display: flex; align-items: center;
-  justify-content: center; min-height: 100svh;
+try {
+  await submitForm(formSchema.formId, answers);
+  // Показываем экран успешной отправки
+} catch (err) {
+  // Выводим полный JSON ошибки от сервера в блок
+  const errorEl = document.getElementById('error-box');
+  errorEl.textContent = `Ошибка при отправке: ${err.message}`;
+  errorEl.classList.remove('hidden');
 }
-.loader-spinner {
-  width: 32px; height: 32px; border-radius: 50%;
-  border: 3px solid rgba(128,128,128,0.2);
-  border-top-color: var(--color-accent);
-  animation: spin 0.7s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
 ```
-
----
-
-## Шаг 4. Данные из Bridge
-
-После подключения в `state` доступно:
-
-```javascript
-state.user.displayName  // Имя пользователя
-state.user.photoURL     // Аватар
-state.user.balance      // Баланс
-state.user.id           // ID пользователя
-
-state.app.shopId        // ID магазина
-state.app.platform      // Платформа
-state.colors.background // Фон (уже применён в CSS)
-state.colors.primaryMain // Акцентный цвет
-```
-
----
-
-## Шаг 5. Чеклист после интеграции
-
-- [ ] Bridge подключён синхронно в `<head>` через CDN URL
-- [ ] Создан `js/bridge.js`, все `window.notibot.*` — только в нём
-- [ ] `app.js` обёрнут в `initBridge()`
-- [ ] Компоненты получают user/colors как параметры, не из глобала
-- [ ] CSS-переменные `--color-*` обновляются из `app.colors`
-- [ ] Есть loading-экран, который скрывается после получения данных
-
----
-
-## Справка по методам навигации
-
-| Что нужно | Метод |
-|---|---|
-| Открыть витрину | `goToStorefront()` |
-| Открыть товар | `goToProduct('ID')` |
-| Открыть статью | `goToArticle('ID')` |
-| Профиль пользователя | `goToUserCard()` |
-| Отправить форму | `submitForm('formId', answers)` |
-
-Если ID товара/статьи неизвестен — всегда fallback на `goToStorefront()`.
-
----
-
-## 📚 Полная документация SDK
-
-Все детали API, форматы данных, примеры работы с формами — в файле:
-👉 [`SDK-reference.md`](./SDK-reference.md)
-
-Читай его если нужно:
-- Узнать точный формат `answers` для `submitForm`
-- Посмотреть полный список полей `user` и `app`
-- Понять как работает `onUpdate` и реактивные обновления баланса
