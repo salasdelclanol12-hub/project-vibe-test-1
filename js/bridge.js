@@ -112,7 +112,8 @@ export async function submitForm(formId, answers) {
         })
         .catch((err) => {
           clearTimeout(timeout);
-          reject(err);
+          const sent = JSON.stringify({ formId, answers });
+          reject(new Error(`${err.message} | Sent: ${sent}`));
         });
     });
   }
