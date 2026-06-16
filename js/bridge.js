@@ -80,13 +80,14 @@ export async function submitForm(formId, answers) {
       const handleMessage = (event) => {
         if (event.data?.source === 'vibe-parent') {
           if (event.data.success === false) {
-            const errorMsg = event.data.error || 'Failed to submit form';
-            const extra = [];
-            if (event.data.data) extra.push(`data: ${JSON.stringify(event.data.data)}`);
-            if (event.data.details) extra.push(`details: ${JSON.stringify(event.data.details)}`);
-            const finalMsg = errorMsg + (extra.length > 0 ? ` [${extra.join(', ')}]` : '');
+            let errorText;
+            try {
+              errorText = JSON.stringify(event.data);
+            } catch (e) {
+              errorText = String(event.data);
+            }
             cleanup();
-            reject(new Error(finalMsg));
+            reject(new Error(errorText));
           } else if (event.data.success === true) {
             cleanup();
             resolve(event.data.data);
