@@ -1,9 +1,15 @@
-/**
- * Notibot Bridge v2.26
- * SDK для интеграции Vibe-приложений.
- * Поддерживает режимы: Inline, Portal, App.
- */
-(function() {
+(function () {
+    class NotibotBridgeError extends Error {
+        constructor(err) {
+            super(typeof err === 'string' ? err : (err?.message || 'Failed to submit form'));
+            this.name = 'NotibotBridgeError';
+            this.code = typeof err === 'string' ? 'ERR_UNKNOWN' : (err?.code || 'ERR_UNKNOWN');
+            this.origin = typeof err === 'string' ? 'unknown' : (err?.origin || 'unknown');
+            this.details = typeof err === 'string' ? null : (err?.details || null);
+        }
+    }
+    window.NotibotBridgeError = NotibotBridgeError;
+
     class NotibotBridge {
         constructor() {
             this.user = {};
@@ -20,7 +26,7 @@
                     this.user = event.data.data.user || {};
                     this.app = event.data.data.app || {};
                     this._updateHandlers.forEach(cb => {
-                        try { cb(this.user, this.app); } catch(e) { console.error(e); }
+                        try { cb(this.user, this.app); } catch (e) { console.error(e); }
                     });
                 } else if (event.data?.source === 'vibe-parent' && event.data?.requestId) {
                     const { requestId, success, data, error } = event.data;
@@ -55,16 +61,10 @@
             }
         }
 
-        /**
-         * Развернуть приложение на весь экран (если запущено в Inline режиме)
-         */
         openPortal(config = {}) {
             this._sendAction('open_portal', config);
         }
 
-        /**
-         * Блокировка/разблокировка скролла родительской страницы
-         */
         setScrollLock(locked) {
             this._sendAction('set_scroll_lock', { locked });
         }
@@ -76,34 +76,26 @@
             }
         }
 
-        // Навигация
         openLink(url) { this._sendAction('open_link', { url }); }
         openStorefront() { this.openLink('/vitrina'); }
         openArticle(id) { this.openLink(`/page/${id}`); }
         openProduct(id) { this.openLink(`/product/${id}`); }
         openUserCard() { this.openLink('/usercard'); }
 
-        // Тактильная отдача
-        hapticImpact(style = 'light', fallback = false) { 
-            this._sendAction('haptic_feedback', { feedbackType: 'impact', style, fallback }); 
+        hapticImpact(style = 'light', fallback = false) {
+            this._sendAction('haptic_feedback', { feedbackType: 'impact', style, fallback });
         }
-        hapticNotification(type = 'success', fallback = false) { 
-            this._sendAction('haptic_feedback', { feedbackType: 'notification', style: type, fallback }); 
+        hapticNotification(type = 'success', fallback = false) {
+            this._sendAction('haptic_feedback', { feedbackType: 'notification', style: type, fallback });
         }
-        hapticSelection(fallback = false) { 
-            this._sendAction('haptic_feedback', { feedbackType: 'selection', fallback }); 
+        hapticSelection(fallback = false) {
+            this._sendAction('haptic_feedback', { feedbackType: 'selection', fallback });
         }
 
-        /**
-         * Отправить заполненную форму
-         * @param {string|number} formId ID формы
-         * @param {Array} answers Ответы в формате [{title: string, answers: string[]}]
-         * @returns {Promise} возвращает промис, который разрешается при успешной отправке
-         */
         submitForm(formId, answers) {
             return new Promise((resolve, reject) => {
                 if (!formId) {
-                    reject(new Error('Form ID is required'));
+                    reject(new NotibotBridgeError({ origin: 'client', code: 'ERR_INVALID_PAYLOAD', message: 'Form ID is required' }));
                     return;
                 }
                 const requestId = Math.random().toString(36).substring(2, 9);
@@ -111,10 +103,10 @@
                     if (response.success) {
                         resolve(response.data);
                     } else {
-                        reject(new Error(response.error || 'Failed to submit form'));
+                        reject(new NotibotBridgeError(response.error));
                     }
                 };
-                
+
                 if (window.parent) {
                     window.parent.postMessage({
                         source: 'vibe-sandbox',
@@ -123,14 +115,13 @@
                     }, '*');
                 } else {
                     delete this._responseHandlers[requestId];
-                    reject(new Error('Parent window not found'));
+                    reject(new NotibotBridgeError({ origin: 'client', code: 'ERR_NO_PARENT', message: 'Parent window not found' }));
                 }
             });
         }
 
         _sendAction(type, payload = {}) {
             const now = Date.now();
-            // Анти-дребезг для команд
             if (this._lastActionTimes[type] && (now - this._lastActionTimes[type] < (type === 'haptic_feedback' ? 50 : 400))) return;
             this._lastActionTimes[type] = now;
 
