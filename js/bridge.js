@@ -76,7 +76,10 @@ export function goToStorefront() {
 // Формы
 export async function submitForm(formId, answers) {
   if (window.notibot && typeof window.notibot.submitForm === 'function') {
-    return window.notibot.submitForm(formId, answers);
+    return Promise.race([
+      window.notibot.submitForm(formId, answers),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Превышено время ожидания ответа от Notibot (10 сек)")), 10000))
+    ]);
   }
   console.log("Mock submitForm call:", formId, answers);
   return new Promise((resolve) => setTimeout(() => resolve({ success: true }), 800));
