@@ -1,17 +1,10 @@
 // js/bridge.js
 // Все вызовы Notibot Bridge — только отсюда.
-
 let _state = { user: null, app: null, colors: null };
 const _listeners = [];
 const _rawResponses = new Map();
-const defColors = {
-  background: "#ffffff",
-  textPrimary: "#0f172a",
-  textSecondary: "#64748b",
-  primaryMain: "#6366f1"
-};
+const defColors = { background: "#ffffff", textPrimary: "#0f172a", textSecondary: "#64748b", primaryMain: "#6366f1" };
 
-// Сохраняем исходное сообщение от сервера в capturing фазе (до деструктуризации в SDK)
 window.addEventListener('message', (event) => {
   if (event.data?.source === 'vibe-parent' && event.data?.requestId) {
     _rawResponses.set(event.data.requestId, event.data);
@@ -51,13 +44,9 @@ if (window.notibot) {
   });
 }
 
-/**
- * Инициализация Bridge. Вызывается один раз из app.js.
- * @param {Function} onReady — коллбэк { user, app, colors }
- */
+// Инициализация Bridge (вызывается один раз из app.js)
 export function initBridge(onReady) {
   let initialized = false;
-
   const timeout = setTimeout(() => {
     if (!initialized) {
       console.warn("Notibot Bridge timeout, loading mock state...");
@@ -86,15 +75,17 @@ export function initBridge(onReady) {
   }
 }
 
-/** Подписаться на обновления (баланс, тема) */
 export function onStateUpdate(fn) { _listeners.push(fn); }
-
-/** Текущее состояние */
 export function getState() { return _state; }
 
 // Навигация
-export function goToStorefront() {
-  window.notibot?.openStorefront?.();
+export function goToStorefront() { window.notibot?.openStorefront?.(); }
+export function goToArticle(id) {
+  if (id && window.notibot && typeof window.notibot.openArticle === 'function') {
+    window.notibot.openArticle(id);
+  } else {
+    window.notibot?.openStorefront?.();
+  }
 }
 
 // Формы
@@ -102,19 +93,16 @@ export async function submitForm(formId, answers) {
   if (window.notibot && typeof window.notibot.submitForm === 'function') {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new Error("Превышено время ожидания ответа от Notibot (10 сек)"));
+        const ErrClass = window.NotibotBridgeError || Error;
+        reject(new ErrClass({
+          origin: 'client',
+          code: 'ERR_RATE_LIMIT',
+          message: 'Превышено время ожидания ответа от Notibot (10 сек)'
+        }));
       }, 10000);
-
       window.notibot.submitForm(formId, answers)
-        .then((res) => {
-          clearTimeout(timeout);
-          resolve(res);
-        })
-        .catch((err) => {
-          clearTimeout(timeout);
-          const sent = JSON.stringify({ formId, answers });
-          reject(new Error(`${err.message} | Sent: ${sent}`));
-        });
+        .then((res) => { clearTimeout(timeout); resolve(res); })
+        .catch((err) => { clearTimeout(timeout); reject(err); });
     });
   }
   console.log("Mock submitForm call:", formId, answers);
@@ -122,13 +110,8 @@ export async function submitForm(formId, answers) {
 }
 
 // Haptics / Виброотклик
-export function triggerHapticImpact(style = 'medium') {
-  window.notibot?.hapticImpact?.(style);
-}
-
-export function triggerHapticSelection() {
-  window.notibot?.hapticSelection?.();
-}
+export function triggerHapticImpact(style = 'medium') { window.notibot?.hapticImpact?.(style); }
+export function triggerHapticSelection() { window.notibot?.hapticSelection?.(); }
 
 // Применение темы
 function _applyTheme(colors) {

@@ -1,7 +1,7 @@
 // js/app.js
 // Главная точка входа приложения.
 // Здесь импортируются и собираются все компоненты.
-// Подключенные компоненты: quiz, quiz-data, quiz-drawer, hub, simulator, simulator-data, simulator-drawer
+// Подключенные компоненты: quiz, quiz-renderer, quiz-data, hub, simulator, simulator-data, simulator-drawer
 
 import { initIcons } from './utils.js';
 import { initBridge } from './bridge.js';
@@ -66,8 +66,16 @@ function initApp(state) {
 
   const screenContainer = document.getElementById('screen-container');
 
-  // Запуск симулятора баланса ресурсов напрямую
-  renderSimulator(screenContainer);
+  // Отображаем меню-хаб с возможностью переключения на квиз или симулятор
+  const showHub = () => {
+    renderHub(
+      screenContainer,
+      () => renderQuiz(screenContainer, showHub),
+      () => renderSimulator(screenContainer, showHub)
+    );
+  };
+
+  showHub();
   initIcons();
 }
 

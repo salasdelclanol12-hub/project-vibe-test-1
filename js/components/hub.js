@@ -14,9 +14,9 @@ export function renderHub(containerEl, onSelectQuiz, onSelectSimulator) {
   containerEl.innerHTML = `
     <div class="fade-in space-y-6">
       <div class="neo-card bg-[#fff5d6] text-slate-900">
-        <h2 class="text-lg font-black mb-1.5 uppercase tracking-wide">🧠 Меню самопомощи</h2>
+        <h2 class="text-lg font-black mb-1.5 uppercase tracking-wide">🧠 Кабинет самопомощи и развития</h2>
         <p class="text-xs text-slate-700 leading-relaxed font-medium">
-          Пройдите тесты ниже, чтобы оценить свое эмоциональное состояние и получить рекомендации психолога.
+          Выберите нужный инструмент ниже, чтобы оценить баланс сил или настроить воронку развития.
         </p>
       </div>
 
@@ -27,8 +27,8 @@ export function renderHub(containerEl, onSelectQuiz, onSelectSimulator) {
             <i data-lucide="clipboard-list" class="w-6 h-6 text-[#6366f1]"></i>
           </div>
           <div class="flex-1 min-w-0">
-            <h3 class="text-base font-black text-slate-900 mb-1 uppercase tracking-tight">Тест на выгорание</h3>
-            <p class="text-xs text-slate-700 leading-normal font-medium">5 вопросов для точной оценки вашего уровня эмоционального истощения.</p>
+            <h3 class="text-base font-black text-slate-900 mb-1 uppercase tracking-tight">Квиз перед воронкой</h3>
+            <p class="text-xs text-slate-700 leading-normal font-medium">Ответьте на 2 вопроса, чтобы получить персональные рекомендации для вашего канала.</p>
           </div>
         </div>
 
