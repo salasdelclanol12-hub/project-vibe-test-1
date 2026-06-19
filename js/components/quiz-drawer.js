@@ -1,5 +1,5 @@
-// js/components/simulator-drawer.js
-// Выдвижная шторка для сбора контактов и отправки результатов симулятора.
+// js/components/quiz-drawer.js
+// Выдвижная шторка для сбора контактов на консультацию.
 
 import { initIcons, escapeHtml } from '../utils.js';
 import { triggerHapticImpact, triggerHapticSelection, submitForm } from '../bridge.js';
@@ -7,12 +7,11 @@ import { triggerHapticImpact, triggerHapticSelection, submitForm } from '../brid
 let activeDrawer = null;
 
 /**
- * Инициализирует и возвращает контроллер шторки с формой для симулятора.
+ * Инициализирует и возвращает контроллер шторки с формой.
  * @param {Object} formSchema - Схема формы из Notibot
- * @param {string} balanceSummary - Текстовая сводка распределения ресурсов
  * @param {Function} onComplete - Коллбэк после успешной отправки
  */
-export function initSimulatorDrawer(formSchema, balanceSummary, onComplete) {
+export function initQuizDrawer(formSchema, onComplete) {
   const existing = document.getElementById('drawer-container');
   if (existing) existing.remove();
 
@@ -35,27 +34,27 @@ export function initSimulatorDrawer(formSchema, balanceSummary, onComplete) {
         <!-- Контент -->
         <div class="overflow-y-auto pr-1 flex-1">
           <h3 class="text-xl font-black mb-1 text-slate-900 uppercase tracking-tight">${escapeHtml(formSchema.formName)}</h3>
-          <p class="text-xs text-slate-700 mb-5 font-semibold">
-            Укажите ваши данные, чтобы получить чек-лист «Как найти 30 минут для себя, не вызывая чувства вины».
-          </p>
+          <p class="text-xs text-slate-700 mb-5 font-semibold">Заполните форму, чтобы получить бесплатную консультацию и разбор ваших результатов.</p>
           
-          <form id="simulator-lead-form" class="space-y-4">
+          <form id="lead-form" class="space-y-4">
             <div>
               <label class="block text-xs font-black uppercase text-slate-800 mb-1.5">Как вас зовут? *</label>
               <input type="text" id="form-name" required placeholder="Введите ваше имя" class="w-full px-4 py-3 rounded-xl border-2 border-black bg-white text-sm font-semibold focus:outline-none shadow-[2px_2px_0px_0px_#000] transition-all text-slate-900" />
             </div>
             
             <div>
-              <label class="block text-xs font-black uppercase text-slate-800 mb-1.5">Ваш Email *</label>
-              <input type="email" id="form-email" required placeholder="example@mail.com" class="w-full px-4 py-3 rounded-xl border-2 border-black bg-white text-sm font-semibold focus:outline-none shadow-[2px_2px_0px_0px_#000] transition-all text-slate-900" />
+              <label class="block text-xs font-black uppercase text-slate-800 mb-1.5">Telegram или Телефон *</label>
+              <input type="text" id="form-contact" required placeholder="@username или +7..." class="w-full px-4 py-3 rounded-xl border-2 border-black bg-white text-sm font-semibold focus:outline-none shadow-[2px_2px_0px_0px_#000] transition-all text-slate-900" />
             </div>
-
-            <!-- Скрытое поле с результатами баланса -->
-            <input type="hidden" id="form-balance" value="${escapeHtml(balanceSummary)}" />
+            
+            <div>
+              <label class="block text-xs font-black uppercase text-slate-800 mb-1.5">Что вас больше всего беспокоит? (необязательно)</label>
+              <textarea id="form-message" rows="2" placeholder="Кратко опишите вашу ситуацию..." class="w-full px-4 py-3 rounded-xl border-2 border-black bg-white text-sm font-semibold focus:outline-none shadow-[2px_2px_0px_0px_#000] transition-all resize-none text-slate-900"></textarea>
+            </div>
             
             <div class="pt-4 border-t-2 border-black">
               <button type="submit" id="drawer-submit-btn" class="neo-btn">
-                <span>Получить чек-лист</span>
+                <span>Отправить заявку</span>
                 <i data-lucide="arrow-right" class="w-4 h-4 ml-2"></i>
               </button>
             </div>
@@ -72,7 +71,7 @@ export function initSimulatorDrawer(formSchema, balanceSummary, onComplete) {
 
   const backdrop = activeDrawer.querySelector('#drawer-backdrop');
   const closeBtn = activeDrawer.querySelector('#drawer-close');
-  const form = activeDrawer.querySelector('#simulator-lead-form');
+  const form = activeDrawer.querySelector('#lead-form');
   const submitBtn = activeDrawer.querySelector('#drawer-submit-btn');
 
   const openDrawer = () => {
@@ -95,10 +94,10 @@ export function initSimulatorDrawer(formSchema, balanceSummary, onComplete) {
     triggerHapticImpact('light');
 
     const name = document.getElementById('form-name').value.trim();
-    const email = document.getElementById('form-email').value.trim();
-    const balance = document.getElementById('form-balance').value;
+    const contact = document.getElementById('form-contact').value.trim();
+    const message = document.getElementById('form-message').value.trim();
 
-    if (!name || !email) return;
+    if (!name || !contact) return;
 
     submitBtn.disabled = true;
     const btnSpan = submitBtn.querySelector('span');
@@ -106,8 +105,8 @@ export function initSimulatorDrawer(formSchema, balanceSummary, onComplete) {
 
     const answers = [
       { title: "Как вас зовут?", answers: [name] },
-      { title: "Ваш Email", answers: [email] },
-      { title: "Распределение ресурсов", answers: [balance] }
+      { title: "Telegram или Телефон", answers: [contact] },
+      { title: "Что вас больше всего беспокоит?", answers: [message || "Не указано"] }
     ];
 
     try {
@@ -121,9 +120,9 @@ export function initSimulatorDrawer(formSchema, balanceSummary, onComplete) {
           <div class="w-16 h-16 bg-[#d7f9e6] border-2 border-black rounded-full flex items-center justify-center text-emerald-600 mb-4 shadow-[3px_3px_0px_0px_#000]">
             <i data-lucide="check" class="w-8 h-8"></i>
           </div>
-          <h3 class="text-xl font-black mb-2 text-slate-900 uppercase">Готово!</h3>
+          <h3 class="text-xl font-black mb-2 text-slate-900 uppercase">Успешно отправлено!</h3>
           <p class="text-xs text-slate-600 max-w-sm mb-6 font-semibold">
-            Чек-лист успешно отправлен на ваш Email: <b>${escapeHtml(email)}</b>. Проверьте ваш почтовый ящик.
+            Спасибо! Психолог свяжется с вами для разбора результатов теста и бесплатной мини-консультации.
           </p>
           <button id="success-close-btn" class="neo-btn max-w-[200px]">Отлично</button>
         </div>
@@ -136,7 +135,7 @@ export function initSimulatorDrawer(formSchema, balanceSummary, onComplete) {
       });
     } catch (err) {
       submitBtn.disabled = false;
-      btnSpan.textContent = 'Получить чек-лист';
+      btnSpan.textContent = 'Отправить заявку';
       alert("Ошибка при отправке: " + err.message);
     }
   });

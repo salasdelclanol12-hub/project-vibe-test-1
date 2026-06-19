@@ -1,7 +1,7 @@
 // js/app.js
 // Главная точка входа приложения.
 // Здесь импортируются и собираются все компоненты.
-// Подключенные компоненты: quiz, quiz-renderer, quiz-data, hub, simulator, simulator-data, simulator-drawer
+// Подключенные компоненты: quiz, quiz-data, quiz-drawer, hub, simulator, simulator-data, simulator-drawer
 
 import { initIcons } from './utils.js';
 import { initBridge } from './bridge.js';
@@ -37,13 +37,9 @@ function initApp(state) {
           
           <!-- Правая часть: Профиль пользователя -->
           <div class="flex items-center gap-2 px-3 py-1.5 bg-white border-2 border-black rounded-xl text-xs font-black shadow-[3px_3px_0px_0px_#000] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_0px_#000] transition-all duration-75">
-            ${state.user && state.user.photoURL ? `
-              <img src="${state.user.photoURL}" class="w-6 h-6 rounded-full border-2 border-black object-cover" alt="" />
-            ` : `
-              <div class="w-6 h-6 rounded-full bg-[var(--color-accent)] border-2 border-black flex items-center justify-center text-[10px]">
-                👤
-              </div>
-            `}
+            <div class="w-6 h-6 rounded-full bg-[var(--color-accent)] border-2 border-black flex items-center justify-center text-[10px]">
+              👤
+            </div>
             <span class="text-slate-800">${state.user ? state.user.displayName : 'Пользователь'}</span>
           </div>
         </div>
@@ -66,16 +62,8 @@ function initApp(state) {
 
   const screenContainer = document.getElementById('screen-container');
 
-  // Отображаем меню-хаб с возможностью переключения на квиз или симулятор
-  const showHub = () => {
-    renderHub(
-      screenContainer,
-      () => renderQuiz(screenContainer, showHub),
-      () => renderSimulator(screenContainer, showHub)
-    );
-  };
-
-  showHub();
+  // Запуск симулятора баланса ресурсов напрямую
+  renderSimulator(screenContainer);
   initIcons();
 }
 
