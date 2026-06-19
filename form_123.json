@@ -1,29 +1,29 @@
 {
-    "formId": "2fYpgzcfp0sBiA2Uh9Np3D",
-    "formName": "Квиз перед воронкой",
-    "formType": "quiz_form",
-    "additionalText": "Отлично! Жми на кнопку чтобы продолжить [&b15;Далее](https://t.me/bot/post#6jTTYdhu7O0sgrcVo404lk)",
+    "formId": "1T2IQFttHlhA8t228jdvxU",
+    "formName": "Для вайб теста ",
+    "formType": "regular_form",
+    "additionalText": "Спасибо за заполнение!\n\nТеперь перейди сюда\n[&b2001;&c#14B860;&variantcontained;&sizeM;Перейти](https://t.me/bot/post#3TjgLMj8Rt54EndOPXLXr1)\n",
     "redirect": null,
-    "pointsForFilling": 100,
+    "pointsForFilling": 0,
     "questions": [
         {
-            "title": "Ваш канал сейчас…",
-            "type": "one of list",
-            "required": true,
-            "options": [
-                "На самом старте (<100 подписчиков)",
-                "Растет, но очень медленно",
-                "Аудитория есть, но она неактивна"
-            ]
+            "title": "имя",
+            "type": "text",
+            "required": false
         },
         {
-            "title": "Как вы сейчас привлекаете подписчиков?",
+            "title": "Телефон",
+            "type": "phone",
+            "required": true
+        },
+        {
+            "title": "Ваш доход",
             "type": "one of list",
             "required": true,
             "options": [
-                "Пока никак, ищу работающие способы",
-                "Только бесплатными методами (комментинг, ВП)",
-                "Пробовал(а) платную рекламу, но результат не устроил"
+                "50к",
+                "100к",
+                "300к"
             ]
         }
     ]

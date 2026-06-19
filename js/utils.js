@@ -84,3 +84,41 @@ export function initIcons() {
     window.lucide.createIcons();
   }
 }
+
+/**
+ * Парсить markdown ссылки и кастомные кнопки для Notibot.
+ * @param {string} text
+ * @returns {string} HTML
+ */
+export function parseMarkdown(text) {
+  if (!text) return '';
+  let html = escapeHtml(text).replace(/\n/g, '<br>');
+  const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+  
+  html = html.replace(linkRegex, (match, anchorText, url) => {
+    if (anchorText.startsWith('&amp;b') || anchorText.startsWith('&amp;c') || anchorText.includes('&amp;')) {
+      const parts = anchorText.split(';');
+      let buttonText = '';
+      let color = '';
+      
+      parts.forEach(part => {
+        if (part.startsWith('&amp;c')) {
+          color = part.replace('&amp;c', '').trim();
+        } else if (!part.startsWith('&amp;b') && !part.startsWith('&amp;variant') && !part.startsWith('&amp;size')) {
+          buttonText = part;
+        }
+      });
+      
+      if (!buttonText) {
+        buttonText = parts[parts.length - 1];
+      }
+      
+      const bgStyle = color ? `background-color: ${color};` : '';
+      return `<a href="${url}" onclick="event.preventDefault(); window.openLink('${url}')" class="inline-flex items-center justify-center px-6 py-2.5 my-2 border-2 border-black rounded-xl text-sm font-black shadow-[3px_3px_0px_0px_#000] text-black hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_0px_#000] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_#000] transition-all" style="${bgStyle}">${buttonText}</a>`;
+    }
+    
+    return `<a href="${url}" onclick="event.preventDefault(); window.openLink('${url}')" class="text-[#6366f1] underline font-bold">${anchorText}</a>`;
+  });
+  
+  return html;
+}

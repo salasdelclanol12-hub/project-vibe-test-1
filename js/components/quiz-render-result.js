@@ -1,7 +1,6 @@
-// js/components/quiz-render-result.js
 import { triggerHapticImpact, submitForm } from '../bridge.js';
 import { FORM_SCHEMA } from './quiz-data.js';
-import { initIcons } from '../utils.js';
+import { initIcons, parseMarkdown } from '../utils.js';
 
 export function renderResult(ctx) {
   const answers = ctx.getAnswers();
@@ -91,7 +90,7 @@ function renderSuccess(ctx) {
       </div>
       <h3 class="text-2xl font-black mb-2 text-slate-900 uppercase">Успешно отправлено!</h3>
       <p class="text-sm text-slate-600 max-w-sm mb-6 font-semibold mx-auto">
-        ${FORM_SCHEMA.additionalText || 'Форма успешно отправлена.'}
+        ${FORM_SCHEMA.additionalText ? parseMarkdown(FORM_SCHEMA.additionalText) : 'Форма успешно отправлена.'}
       </p>
       <button id="success-back-btn" class="neo-btn max-w-[200px] mx-auto">Отлично</button>
     </div>

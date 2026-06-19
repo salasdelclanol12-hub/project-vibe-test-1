@@ -67,6 +67,16 @@ export function onStateUpdate(fn) { _listeners.push(fn); }
 export function getState() { return _state; }
 
 // Навигация
+export function openLink(url) {
+  if (window.notibot && typeof window.notibot.openLink === 'function') {
+    window.notibot.openLink(url);
+  } else {
+    console.log("Mock openLink call:", url);
+    window.open(url, '_blank');
+  }
+}
+window.openLink = openLink;
+
 export function goToStorefront() {
   if (window.notibot && typeof window.notibot.openStorefront === 'function') {
     window.notibot.openStorefront();
