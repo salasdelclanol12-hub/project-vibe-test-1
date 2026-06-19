@@ -2,7 +2,7 @@
 // Главное меню кабинета психолога (Экран-хаб).
 
 import { initIcons } from '../utils.js';
-import { triggerHapticImpact } from '../bridge.js';
+import { triggerHapticImpact, goToArticle, goToProduct } from '../bridge.js';
 
 /**
  * Рендерит экран выбора тестов.
@@ -42,6 +42,29 @@ export function renderHub(containerEl, onSelectQuiz, onSelectSimulator) {
             <p class="text-xs text-slate-700 leading-normal font-medium">Слайдер-симулятор распределения энергии по 5 ключевым сферам жизни.</p>
           </div>
         </div>
+
+        <!-- Секция дополнительных ресурсов -->
+        <div class="neo-card bg-white space-y-4">
+          <h3 class="text-xs font-black uppercase tracking-wider text-slate-900">Полезные материалы</h3>
+          <div class="space-y-3">
+            <button id="hub-article-btn" class="neo-btn neo-btn-secondary text-left font-bold text-xs flex justify-between items-center py-3.5 px-4 shadow-[2px_2px_0px_0px_#000] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_#000]">
+              <span class="flex items-center gap-2">
+                <i data-lucide="book-open" class="w-4 h-4 text-[#6366f1]"></i>
+                Читать статью
+              </span>
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+            </button>
+            
+            <button id="hub-product-btn" class="neo-btn neo-btn-secondary text-left font-bold text-xs flex justify-between items-center py-3.5 px-4 shadow-[2px_2px_0px_0px_#000] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_#000]">
+              <span class="flex items-center gap-2">
+                <i data-lucide="shopping-bag" class="w-4 h-4 text-[#10b981]"></i>
+                Посмотреть товар
+              </span>
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
   `;
@@ -56,5 +79,15 @@ export function renderHub(containerEl, onSelectQuiz, onSelectSimulator) {
   containerEl.querySelector('#hub-sim-card').addEventListener('click', () => {
     triggerHapticImpact('medium');
     onSelectSimulator();
+  });
+
+  containerEl.querySelector('#hub-article-btn').addEventListener('click', () => {
+    triggerHapticImpact('light');
+    goToArticle('1DxmLSEyBQwUh594rak84o');
+  });
+
+  containerEl.querySelector('#hub-product-btn').addEventListener('click', () => {
+    triggerHapticImpact('light');
+    goToProduct('07Au8KzNogbmGRvM28jIEl');
   });
 }

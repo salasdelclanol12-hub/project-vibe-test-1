@@ -27,7 +27,7 @@ function initApp(state) {
           <!-- Левая часть: Категория и Статус -->
           <div class="flex items-center gap-2">
             <span class="bg-[#6366f1] text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 border-2 border-black shadow-[2px_2px_0px_0px_#000] rounded-md">
-              Mental Workspace v1.0.2 🧠
+              Mental Workspace v1.0.3 🧠
             </span>
             <span class="text-[10px] font-bold text-slate-700 bg-white px-2 py-1 border-2 border-black rounded-md flex items-center gap-1.5">
               <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse border border-black"></span>

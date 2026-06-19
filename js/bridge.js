@@ -83,6 +83,24 @@ export function goToStorefront() {
   }
 }
 
+export function goToProduct(id) {
+  if (window.notibot && typeof window.notibot.openProduct === 'function') {
+    window.notibot.openProduct(id);
+  } else {
+    console.log("Mock openProduct call for ID:", id);
+    alert(`Переход к товару: ${id}`);
+  }
+}
+
+export function goToArticle(id) {
+  if (window.notibot && typeof window.notibot.openArticle === 'function') {
+    window.notibot.openArticle(id);
+  } else {
+    console.log("Mock openArticle call for ID:", id);
+    alert(`Переход к статье: ${id}`);
+  }
+}
+
 // Формы
 export async function submitForm(formId, answers) {
   if (window.notibot && typeof window.notibot.submitForm === 'function') {
