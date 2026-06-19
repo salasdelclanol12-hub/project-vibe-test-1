@@ -1,115 +1,95 @@
 ---
-name: Notibot Form Integration & Debugging Guide
-description: Инструкция по правильному подключению форм, обходу ограничений деструктуризации SDK и предотвращению ошибок валидации на сервере Notibot.
+name: Notibot Bridge Integration & Form Debugging Guide
+description: Инструкция по подключению Notibot Bridge SDK, обработке ошибок NotibotBridgeError и отладке форм.
 ---
 
-# Скилл: Интеграция и надежная отладка форм Notibot
+# Скилл: Подключение Notibot Bridge и интеграция форм
 
 > [!IMPORTANT]
-> Этот скилл содержит критически важные архитектурные решения по работе с формами Notibot. Прочитайте его полностью перед изменением файлов `bridge.js` или компонентов шторки/форм.
+> Этот скилл содержит правила инициализации Notibot Bridge SDK и работы с формами Notibot.
+> Прочитайте его полностью перед созданием файлов `bridge.js` или компонентов приложения.
 
 ---
 
-## 🔒 1. Локальная загрузка SDK (Content Security Policy)
+## 🔒 Шаг 1. Локальное подключение SDK (Content Security Policy)
 
-> [!WARNING]
-> Никогда не используйте внешние CDN-ссылки вроде `https://list.notibot.ru/notibot-bridge.js` в проектах со строгими политиками безопасности. Скрипт будет заблокирован директивой CSP `script-src 'self'`.
+Для обхода ограничений безопасности (директива CSP `script-src 'self'`) и обеспечения автономности мы подключаем Notibot Bridge SDK как локальный ресурс.
 
-* **Правильное решение**: Скачайте SDK локально в `js/notibot-bridge.js` и подключайте его в `<head>` в `index.html` как локальный ресурс:
-  ```html
-  <script src="./js/notibot-bridge.js"></script>
-  ```
-  Это гарантирует полную совместимость с CSP и мгновенный старт.
+Открой `index.html` и добавь строку **синхронно** в `<head>`, **до любых других скриптов**:
 
----
-
-## 📊 2. Правила валидации схемы и отправки ответов
-
-При работе с методом `window.notibot.submitForm(formId, answers)` бэкенд Notibot сверяет структуру с JSON-схемой формы.
-
-### 2.1. Строгое совпадение названий вопросов
-Названия полей (ключ `title` в объекте ответа) должны **символ в символ** совпадать с заголовками вопросов из схемы на сервере.
-* Обратите внимание на пробелы! Например, если в схеме вопрос называется `"Имя "` (с пробелом на конце), отправка ключа `"Имя"` (без пробела) приведет к ошибке `Failed to submit form`.
-* Отправка полей, которых нет в схеме (например, попытка продублировать или отправить лишний лог), вызовет ошибку валидации.
-
-### 2.2. Заполнение необязательных полей
-Если поле не заполнено пользователем и оно не является обязательным (`required: false`):
-* **Правильно**: Отправлять пустой массив в значении ответов:
-  ```javascript
-  { title: "Имя ", answers: name ? [name] : [] }
-  ```
-* **Неправильно**: Отправлять пустую строку `answers: [""]` или опускать/передавать `undefined`. Это приведет к ошибке формата данных на бэкенде.
-
----
-
-## 🛠️ 3. Решение проблемы с потерей деталей ошибок в SDK
-
-### 3.1. Суть проблемы
-По умолчанию локальный SDK Notibot при обработке ответов от родительского окна делает деструктуризацию сообщения:
-`const { requestId, success, data, error } = event.data;`
-И передает дальше только эти свойства. Если сервер присылает детальные ошибки валидации (например, в свойствах `details` или `message`), они **полностью теряются**, а разработчик видит лишь дефолтное `Failed to submit form`.
-
-### 3.2. Архитектурное решение (Capturing + Proxy + Getter/Setter)
-Для того чтобы прокинуть сырой ответ сервера на форму без модификации исходного SDK, используйте следующий шаблон в `js/bridge.js`:
-
-```javascript
-const _rawResponses = new Map();
-
-// 1. Захватываем оригинальное событие на фазе capturing (до обработчика SDK)
-window.addEventListener('message', (event) => {
-  if (event.data?.source === 'vibe-parent' && event.data?.requestId) {
-    _rawResponses.set(event.data.requestId, event.data);
-  }
-}, true);
-
-// 2. Оборачиваем _responseHandlers в Proxy для подмены поля error полным JSON
-function _wrap(inst) {
-  if (inst?._responseHandlers && !inst._responseHandlers.__isProxy) {
-    inst._responseHandlers = new Proxy(inst._responseHandlers, {
-      set(target, prop, val) {
-        if (typeof val === 'function') {
-          const orig = val;
-          val = (resp) => {
-            if (resp && !resp.success) {
-              const raw = _rawResponses.get(prop) || resp;
-              try { resp.error = JSON.stringify(raw); } catch (e) { resp.error = String(raw); }
-            }
-            _rawResponses.delete(prop);
-            return orig(resp);
-          };
-        }
-        return Reflect.set(target, prop, val);
-      },
-      get(t, p) { return p === '__isProxy' ? true : Reflect.get(t, p); }
-    });
-  }
-}
-
-// 3. Устраняем гонку загрузки скриптов с помощью геттера/сеттера на window.notibot
-if (window.notibot) {
-  _wrap(window.notibot);
-} else {
-  let _temp;
-  Object.defineProperty(window, 'notibot', {
-    configurable: true, enumerable: true,
-    get() { return _temp; },
-    set(val) { _temp = val; _wrap(val); }
-  });
-}
+```html
+<!-- Notibot Bridge — СИНХРОННО, локальный файл, без defer/async -->
+<script src="./js/notibot-bridge.js"></script>
 ```
 
+Найди в `index.html` комментарий `💡 Notibot Bridge подключается здесь` и замени его на строку выше.
+
+> [!WARNING]
+> Никогда не подключай Bridge через `import`, `defer` или `async`, и не используй внешние CDN (они блокируются CSP).
+> Только синхронный локальный `<script>` в `<head>`. Иначе приложение пропустит первое сообщение `NOTIBOT_INIT` и зависнет на загрузке.
+
 ---
 
-## 🚀 4. Шаблон реализации отправки форм в `js/bridge.js`
+## 🛠️ Шаг 2. Создание единого моста `js/bridge.js`
 
-Используйте этот компактный и отказоустойчивый метод для обертки `submitForm`. Он содержит безопасный 10-секундный таймаут и возвращает полную ошибку:
+Создай файл `js/bridge.js`. Это должно быть **единственное место** в проекте, где происходит обращение к `window.notibot`.
+Здесь мы инициализируем мост, настраиваем тему и оборачиваем метод отправки форм в безопасный промис с таймаутом в 10 секунд.
 
 ```javascript
+// js/bridge.js
+// Все вызовы Notibot Bridge — только отсюда.
+
+let _state = { user: null, app: null, colors: null };
+const _listeners = [];
+
+/**
+ * Инициализация Bridge. Вызывается один раз из app.js.
+ * @param {Function} onReady — коллбэк { user, app, colors }
+ */
+export function initBridge(onReady) {
+  if (!window.notibot) {
+    console.error("Notibot Bridge SDK не найден на странице!");
+    return;
+  }
+
+  window.notibot.onUpdate(function(user, app) {
+    _state = { user, app, colors: app.colors };
+    _applyTheme(_state.colors);
+
+    if (onReady) {
+      onReady(_state);
+      onReady = null; // Вызываем onReady только один раз при инициализации
+    }
+    _listeners.forEach(fn => fn(_state));
+  });
+}
+
+/** Подписаться на обновления (баланс, тема) */
+export function onStateUpdate(fn) { _listeners.push(fn); }
+
+/** Текущее состояние */
+export function getState() { return _state; }
+
+// Навигация
+export function goToProduct(id)   { id ? window.notibot.openProduct(id)  : window.notibot.openStorefront(); }
+export function goToArticle(id)   { id ? window.notibot.openArticle(id)  : window.notibot.openStorefront(); }
+export function goToStorefront()  { window.notibot.openStorefront(); }
+export function goToUserCard()    { window.notibot.openUserCard(); }
+
+/**
+ * Отправить форму с поддержкой таймаута
+ * @param {string} formId — ID формы из схемы
+ * @param {Array} answers — массив ответов
+ */
 export async function submitForm(formId, answers) {
   if (window.notibot && typeof window.notibot.submitForm === 'function') {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new Error("Превышено время ожидания ответа от Notibot (10 сек)"));
+        reject(new window.NotibotBridgeError({
+          origin: 'client',
+          code: 'ERR_RATE_LIMIT',
+          message: 'Превышено время ожидания ответа от Notibot (10 сек)'
+        }));
       }, 10000);
 
       window.notibot.submitForm(formId, answers)
@@ -119,34 +99,160 @@ export async function submitForm(formId, answers) {
         })
         .catch((err) => {
           clearTimeout(timeout);
-          // Выводим ошибку, которая благодаря Proxy содержит полный JSON ответа
-          reject(err);
+          reject(err); // err является экземпляром NotibotBridgeError
         });
     });
   }
-  console.log("Mock submitForm call:", formId, answers);
+  console.log("Mock submitForm call (вне Notibot):", formId, answers);
   return new Promise((resolve) => setTimeout(() => resolve({ success: true }), 800));
+}
+
+// Тема
+function _applyTheme(colors) {
+  if (!colors) return;
+  const r = document.documentElement;
+  r.style.setProperty('--color-bg',     colors.background);
+  r.style.setProperty('--color-text',   colors.textPrimary);
+  r.style.setProperty('--color-muted',  colors.textSecondary);
+  r.style.setProperty('--color-accent', colors.primaryMain);
+  document.body.style.backgroundColor = colors.background;
+  document.body.style.color           = colors.textPrimary;
 }
 ```
 
 ---
 
-## 📝 5. Вывод ошибок в UI для быстрой отладки (Обязательное требование)
+## 📊 Шаг 3. Правила валидации схемы и отправки ответов
 
+При отправке ответов формы бэкенд Notibot проверяет структуру полей на соответствие JSON-схеме формы.
+
+### 3.1. Строгое совпадение названий вопросов
+Поля ответов (`title`) должны **символ в символ** совпадать с заголовками вопросов из схемы на сервере.
+* Остерегайтесь пробелов! Если на сервере поле называется `"Телефон "` (с пробелом на конце), отправка ключа `"Телефон"` приведет к ошибке валидации.
+
+### 3.2. Заполнение необязательных полей
+Если поле не является обязательным (`required: false`) и пользователь его не заполнил:
+* **Правильно**: Отправлять пустой массив в значении ответов:
+  ```javascript
+  { title: "Имя", answers: name ? [name] : [] }
+  ```
+* **Неправильно**: Отправлять пустую строку `answers: [""]` или передавать `undefined`. Это приведет к ошибке формата данных на бэкенде.
+
+---
+
+## 📝 Шаг 4. Обработка ошибок и вывод в UI для отладки
+
+### 4.1. Использование `NotibotBridgeError`
+Метод `submitForm` отклоняет промис объектом `NotibotBridgeError`. Он содержит свойства:
+* `message` — текст сообщения об ошибке;
+* `code` — строковый код ошибки (`ERR_RATE_LIMIT`, `ERR_VALIDATION_FAILED`, `ERR_NOT_FOUND`, `ERR_NO_PARENT`, `ERR_INVALID_PAYLOAD`);
+* `origin` — источник ошибки (`client` | `bridge` | `server`);
+* `details` — детальные ошибки валидации полей от сервера (если есть).
+
+### 4.2. Обязательный вывод ошибок в интерфейс
 > [!IMPORTANT]
-> При запуске приложения внутри Notibot (в клиенте или в веб-вью) разработчик **не видит консоль лог (`console.error`/`console.log`)**.
-> Любые скрытые ошибки усложняют отладку. Поэтому **ОБЯЗАТЕЛЬНО** выводите полный текст пойманной ошибки (который благодаря нашему Proxy содержит детальный JSON-ответ сервера с кодами и полями валидации) на экран прямо в форму.
+> При работе приложения внутри Mini App консоль разработчика (`console.error`) недоступна. Любые скрытые ошибки усложняют поиск проблем.
+> **ОБЯЗАТЕЛЬНО** создавайте элемент вывода ошибок в форме и наполняйте его через безопасный `textContent` (для защиты от XSS).
 
-Используйте `textContent` (для защиты от XSS) при выводе ошибки в блок:
+**Пример отправщика в компоненте формы:**
 
 ```javascript
-try {
-  await submitForm(formSchema.formId, answers);
-  // Показываем экран успешной отправки
-} catch (err) {
-  // Выводим полный JSON ошибки от сервера прямо в интерфейс
-  const errorEl = document.getElementById('error-box');
-  errorEl.textContent = `Ошибка при отправке: ${err.message}`;
-  errorEl.classList.remove('hidden');
+async function handleFormSubmit() {
+  const formId = "65cd1efbc1b29a0012f45abc";
+  const answers = [
+    { title: "Ваш Email", answers: [document.getElementById('email').value] }
+  ];
+
+  const errorBox = document.getElementById('error-box');
+  errorBox.classList.add('hidden');
+
+  try {
+    const result = await submitForm(formId, answers);
+    console.log("Успешно отправлено:", result);
+    // Скрываем форму, показываем сообщение об успехе
+  } catch (error) {
+    console.error("Ошибка формы:", error);
+    errorBox.classList.remove('hidden');
+
+    // Классификация ошибок
+    if (error.code === 'ERR_RATE_LIMIT') {
+      errorBox.textContent = "Слишком частые запросы. Пожалуйста, подождите.";
+    } else if (error.code === 'ERR_VALIDATION_FAILED') {
+      errorBox.textContent = `Ошибка валидации: ${error.message}`;
+      if (error.details) {
+        console.log("Детали ошибок валидации:", error.details);
+      }
+    } else {
+      errorBox.textContent = `Не удалось отправить: ${error.message}`;
+    }
+  }
 }
 ```
+
+---
+
+## ⏳ Шаг 5. Обновление app.js (Экран загрузки)
+
+Оберни `initApp` в `initBridge` вместо прямого запуска:
+
+```javascript
+// js/app.js
+import { initBridge } from './bridge.js';
+
+initBridge(function(state) {
+  initApp(state); // state содержит { user, app, colors }
+});
+
+function initApp(state) {
+  // Скрываем лоадер и рендерим приложение
+  const loadingEl = document.getElementById('loading');
+  if (loadingEl) loadingEl.style.display = 'none';
+
+  const appEl = document.getElementById('app');
+  appEl.innerHTML = `
+    <main class="max-w-xl mx-auto px-6 pt-8 pb-8 safe-top safe-bottom fade-in">
+      <h1 class="text-2xl font-bold mb-2">Привет, \${state.user.displayName || 'гость'}!</h1>
+      <p style="color: var(--color-muted)" class="text-sm">Баланс: \${state.user.balance} монет</p>
+    </main>
+  `;
+}
+```
+
+Добавь в `index.html` лоадер-экран:
+```html
+<div id="loading" class="loader-screen">
+  <div class="loader-spinner"></div>
+</div>
+```
+
+И стили в `css/styles.css`:
+```css
+.loader-screen {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  display: flex; align-items: center; justify-content: center;
+  background-color: var(--color-bg, #ffffff); z-index: 9999;
+}
+.loader-spinner {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 3px solid rgba(128,128,128,0.2);
+  border-top-color: var(--color-accent, #007aff);
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+```
+
+---
+
+## 📚 Шаг 6. Чеклист после интеграции
+
+- [x] SDK скопирован локально в `js/notibot-bridge.js`.
+- [ ] Скрипт подключен в `index.html` синхронно в `<head>` перед остальными скриптами.
+- [ ] Все вызовы `window.notibot.*` происходят только внутри файла `js/bridge.js`.
+- [ ] Все формы обрабатывают ошибки через `NotibotBridgeError` и выводят их пользователю в UI с помощью `textContent`.
+- [ ] Необязательные незаполненные поля отправляются как `[]`, а не как `[""]` или `undefined`.
+- [ ] В приложении есть лоадер-экран, скрываемый после инициализации моста.
+
+---
+
+## 📖 Полная справка по методам
+Подробный список всех свойств, форматов и параметров доступен в файле [`SDK-reference.md`](./SDK-reference.md).

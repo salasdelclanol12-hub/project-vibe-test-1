@@ -21,7 +21,7 @@ Vibe Apps are rendered inside a secure `iframe`. Communication is via `postMessa
 
 ---
 
-## 📊 Bridge Data (v2.6+)
+## 📊 Bridge Data (v2.26+)
 - `user`: { id, displayName, photoURL, balance, type }
 - `app`: { shopId, platform, theme, colors: { background, textPrimary, textSecondary, primaryMain } }
 
@@ -54,6 +54,10 @@ Vibe Apps are rendered inside a secure `iframe`. Communication is via `postMessa
 {
   "formId": "65cd1efbc1b29a0012f45abc",
   "formName": "Обратная связь",
+  "formType": "regular_form",
+  "additionalText": "Спасибо! Мы свяжемся с вами в ближайшее время.",
+  "redirect": "https://notibot.ru/success",
+  "pointsForFilling": 50,
   "questions": [
     {
       "title": "Ваш Email",
@@ -94,11 +98,17 @@ const answers = [
 ];
 ```
 
-### 3. Интеграция в JS-код (Пример)
-Метод возвращает Promise, который можно обработать с помощью `.then()/.catch()` или `async/await`. 
+### 3. Интеграция в JS-код (Пример с обработкой ошибок)
+Метод возвращает Promise, который разрешается объектом данных отправленного заполнения (filling) или отклоняется экземпляром `NotibotBridgeError`.
 
 > [!IMPORTANT]
 > На бэкенд автоматически подмешиваются метаданные текущего авторизованного пользователя Notibot (`tg_id`, имя, аватар). Vibe-приложению передавать их самостоятельно не нужно.
+
+Класс ошибки `NotibotBridgeError` наследуется от стандартного `Error` и содержит свойства:
+- `message` (текст сообщения об ошибке);
+- `code` (строковый код ошибки: `ERR_RATE_LIMIT`, `ERR_VALIDATION_FAILED`, `ERR_NOT_FOUND`, `ERR_NO_PARENT`, `ERR_INVALID_PAYLOAD`);
+- `origin` (источник ошибки: `client` | `bridge` | `server`);
+- `details` (детальные ошибки валидации полей от сервера, если есть).
 
 ```javascript
 async function handleFormSubmit() {
@@ -113,15 +123,31 @@ async function handleFormSubmit() {
         const result = await window.notibot.submitForm(formId, answers);
         
         console.log("Форма успешно сохранена на сервере:", result);
-        alert("Спасибо за заполнение формы!");
+        
+        // Показываем текст благодарности из схемы формы
+        const successMsg = formSchema.additionalText || "Спасибо за заполнение формы!";
+        alert(successMsg);
+        
+        // Редирект, если настроен
+        if (formSchema.redirect) {
+            window.location.href = formSchema.redirect;
+        }
     } catch (error) {
-        // Ошибка может возникнуть при ошибке сети, неверном ID формы или срабатывании анти-спама
         console.error("Ошибка при отправке формы:", error.message);
-        alert("Ошибка: " + error.message);
+        
+        // Классифицируем ошибки для лучшего UX
+        if (error.code === 'ERR_RATE_LIMIT') {
+            alert("Пожалуйста, подождите несколько секунд перед повторной отправкой.");
+        } else if (error.code === 'ERR_VALIDATION_FAILED') {
+            alert("Ошибка валидации. Проверьте правильность введенных данных.");
+            if (error.details) {
+                console.log("Детали ошибок валидации:", error.details);
+            }
+        } else if (error.code === 'ERR_NO_PARENT') {
+            alert("Ошибка: приложение запущено вне Telegram-магазина.");
+        } else {
+            alert("Ошибка: " + error.message);
+        }
     }
 }
-```
-
-
-
 
