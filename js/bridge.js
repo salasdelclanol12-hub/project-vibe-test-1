@@ -37,13 +37,13 @@ export function initBridge(onReady) {
   }, 1000);
 
   if (window.notibot && typeof window.notibot.onUpdate === 'function') {
-    window.notibot.onUpdate(function(data) {
+    window.notibot.onUpdate(function(user, app) {
       clearTimeout(timeout);
       initialized = true;
       _state = {
-        user: data.user,
-        app: data.app,
-        colors: data.app?.colors || {
+        user: user,
+        app: app,
+        colors: app?.colors || {
           background: "#ffffff",
           textPrimary: "#0f172a",
           textSecondary: "#64748b",

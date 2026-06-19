@@ -1,0 +1,30 @@
+{
+    "formId": "1T2IQFttHlhA8t228jdvxU",
+    "formName": "Для вайб теста ",
+    "formType": "regular_form",
+    "additionalText": "Спасибо за заполнение!",
+    "redirect": null,
+    "pointsForFilling": 0,
+    "questions": [
+        {
+            "title": "имя",
+            "type": "text",
+            "required": false
+        },
+        {
+            "title": "Телефон",
+            "type": "phone",
+            "required": true
+        },
+        {
+            "title": "Ваш доход",
+            "type": "one of list",
+            "required": true,
+            "options": [
+                "50к",
+                "100к",
+                "300к"
+            ]
+        }
+    ]
+}
